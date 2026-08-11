@@ -91,11 +91,30 @@ npm run dev
 
 Then open **http://localhost:5173**. The API listens on 5175; Vite proxies `/api` to it.
 
-| Command         | Description                                        |
-| :-------------- | :------------------------------------------------- |
-| `npm run dev`   | Start API + client together (concurrently)         |
-| `npm run build` | Build the client for production                    |
-| `npm start`     | Serve the API + built client from one process      |
+| Command               | Description                                        |
+| :-------------------- | :------------------------------------------------- |
+| `npm run dev`         | Start API + client together (concurrently)         |
+| `npm run build`       | Build the client for production                    |
+| `npm start`           | Serve the API + built client from one process      |
+| `npm run package:win` | Build a portable Windows app with `MediaScraper.exe` |
+
+## 📦 Portable Windows build (no Node required to run)
+
+`npm run package:win` assembles a fully self-contained app in `dist-win\MediaScraper\`:
+
+```
+MediaScraper/
+├── MediaScraper.exe   # double-click to run: starts the server, opens the browser
+├── node/node.exe      # bundled Node runtime
+├── server/            # API + production deps (yt-dlp, ffmpeg, sharp included)
+└── client/dist/       # built frontend, served on http://localhost:5175
+```
+
+Double-clicking `MediaScraper.exe` opens a console window with the server logs and
+launches the app in your default browser; closing the console stops it. The folder
+can be moved or copied to any Windows PC — nothing needs to be installed there.
+(A true single-file exe isn't practical here: yt-dlp, ffmpeg, and sharp are native
+binaries that have to live on disk next to the app anyway.)
 
 ## 🔐 Instagram & age-restricted content
 

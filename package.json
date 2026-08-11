@@ -11,6 +11,7 @@
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
+    "package:win": "powershell -ExecutionPolicy Bypass -File scripts/package-win.ps1",
     "lint": "npm run lint -w client"
   },
   "devDependencies": {
