@@ -68,6 +68,18 @@ if (fs.existsSync(clientDist)) {
 setInterval(cleanupStaleJobs, 10 * 60 * 1000)
 cleanupStaleJobs()
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Media Scraper API listening on http://localhost:${PORT}`)
+})
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    // Without this, the raw crash leaves the client 500-ing on every /api call
+    // with no hint why.
+    console.error(
+      `Port ${PORT} is already in use — Media Scraper is probably already running ` +
+        `(another "npm run dev" or MediaScraper.exe). Close that one and try again.`,
+    )
+    process.exit(1)
+  }
+  throw err
 })

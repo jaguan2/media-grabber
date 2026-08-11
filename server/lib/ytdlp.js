@@ -21,6 +21,11 @@ export function commonFlags() {
   const flags = {
     noWarnings: true,
     userAgent: BROWSER_UA,
+    // YouTube extraction needs a JS runtime to solve player challenges; without
+    // one, yt-dlp uses a deprecated fallback that intermittently fails (bot
+    // checks, missing formats, 403s). Reuse the Node that runs this server —
+    // in the portable build that's the bundled node.exe.
+    jsRuntimes: `node:${process.execPath}`,
   }
   if (fs.existsSync(COOKIES_FILE)) flags.cookies = COOKIES_FILE
   return flags
