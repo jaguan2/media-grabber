@@ -6,28 +6,46 @@ export function Footer() {
     <Box
       component="footer"
       sx={{
-        maxWidth: 1080,
-        mx: 'auto',
         width: '100%',
-        px: { xs: 3, md: 4 },
-        py: { xs: 5, md: 7 },
+        px: { xs: 2, sm: 3, md: '4%', lg: '5%' },
+        pt: 3,
+        pb: 'max(24px, env(safe-area-inset-bottom))',
+        bgcolor: (theme) => theme.app.surfaceMuted,
         mt: { xs: 4, md: 6 },
         borderTop: (t) => `1px solid ${t.app.border}`,
         display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
+        flexWrap: 'wrap',
         alignItems: { xs: 'flex-start', sm: 'center' },
         justifyContent: 'space-between',
         gap: 1.5,
+        '& p': { overflowWrap: 'anywhere' },
       }}
     >
-      <Typography sx={{ fontWeight: 500, fontSize: 15 }}>
-        No ads. No trackers. Just your media
-        <Box component="span" sx={{ color: 'secondary.main' }}>
-          .
-        </Box>
-      </Typography>
+      <Box>
+        <Typography sx={{ fontSize: 15 }}>
+          Created by{' '}
+          <Box
+            component="a"
+            href="https://jaguan2.github.io/personal-portfolio/"
+            target="_blank"
+            rel="noreferrer"
+            sx={{
+              color: 'text.primary',
+              fontWeight: 600,
+              textUnderlineOffset: '4px',
+              '&:hover': { color: 'secondary.main' },
+              '&:focus-visible': { outline: '2px solid', outlineColor: 'secondary.main', outlineOffset: 4 },
+            }}
+          >
+            Jason Guan
+          </Box>
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5 }}>
+          Software Engineer
+        </Typography>
+      </Box>
       <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
-        Download only content you have the right to save.
+        © {new Date().getFullYear()} Jason Guan
       </Typography>
     </Box>
   )

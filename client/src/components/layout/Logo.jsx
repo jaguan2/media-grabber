@@ -16,6 +16,7 @@ export function Logo({ onGoHome }) {
         onGoHome?.()
       }}
       sx={{
+        minHeight: 44,
         borderRadius: 1,
         '&:focus-visible': {
           outline: (t) => `2px solid ${t.app.accent}`,

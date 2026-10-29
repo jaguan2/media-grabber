@@ -54,7 +54,7 @@ export function GalleryCard({ images, title, platform }) {
   const single = images.length === 1
 
   return (
-    <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
+    <Paper sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
       {/* Toolbar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2.5 }}>
         <Typography sx={{ fontWeight: 600, fontSize: 15, mr: 'auto' }}>
@@ -140,7 +140,7 @@ export function GalleryCard({ images, title, platform }) {
           display: 'grid',
           gridTemplateColumns: single
             ? 'minmax(0, 440px)'
-            : { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
+            : { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
           justifyContent: single ? 'center' : 'start',
           gap: 1.5,
         }}
@@ -187,8 +187,8 @@ export function GalleryCard({ images, title, platform }) {
                     position: 'absolute',
                     top: 8,
                     right: 8,
-                    width: 28,
-                    height: 28,
+                    width: { xs: 44, md: 28 },
+                    height: { xs: 44, md: 28 },
                     borderRadius: '50%',
                     bgcolor: isSelected ? theme.app.accent : alpha('#ffffff', 0.9),
                     border: `1px solid ${isSelected ? theme.app.accent : theme.app.border}`,
@@ -222,8 +222,8 @@ export function GalleryCard({ images, title, platform }) {
                   }
                   aria-label={`Download photo ${i + 1} as ${fmt.toUpperCase()}`}
                   sx={(theme) => ({
-                    width: 32,
-                    height: 32,
+                    width: { xs: 44, md: 32 },
+                    height: { xs: 44, md: 32 },
                     borderRadius: '50%',
                     bgcolor: alpha('#ffffff', 0.95),
                     border: `1px solid ${theme.app.border}`,

@@ -3,6 +3,7 @@ import { Box, Paper, Typography, LinearProgress, Stack } from '@mui/material'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import MovieRoundedIcon from '@mui/icons-material/MovieRounded'
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded'
+import GifRoundedIcon from '@mui/icons-material/GifRounded'
 import { Button } from '../common/Button'
 import { SegmentedControl } from '../common/SegmentedControl'
 import { startJob, getJob, jobFileUrl, mediaProxyUrl } from '../../utils/api'
@@ -10,7 +11,7 @@ import { downloadUrl } from '../../utils/download'
 import { formatBytes, formatDuration, safeName } from '../../utils/format'
 
 /**
- * One downloadable video: thumbnail + metadata, MP4/MP3 toggle, a quality
+ * One downloadable video: thumbnail + metadata, MP4/MP3/GIF toggle, a quality
  * ladder for MP4, and a download button that tracks server-side progress.
  */
 export function VideoCard({ item }) {
@@ -29,13 +30,13 @@ export function VideoCard({ item }) {
 
   const download = async () => {
     setError(null)
-    if (isDirect) {
+    if (isDirect && container === 'mp4') {
       downloadUrl(mediaProxyUrl(item.directUrl, { filename: `${safeName(item.title)}.mp4` }))
       return
     }
     try {
       const { id } = await startJob({
-        url: item.url,
+        url: container === 'gif' ? item.directUrl ?? item.url : item.url,
         format: container,
         height: container === 'mp4' ? height : undefined,
         playlistIndex: item.playlistIndex,
@@ -87,16 +88,16 @@ export function VideoCard({ item }) {
   }))
 
   return (
-    <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
-      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+    <Paper sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+      <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, flexDirection: { xs: 'column', md: 'row' } }}>
         {item.thumbnail && (
-          <Box sx={{ position: 'relative', flexShrink: 0, alignSelf: { xs: 'stretch', sm: 'start' } }}>
+          <Box sx={{ position: 'relative', flexShrink: 0, alignSelf: { xs: 'stretch', md: 'start' } }}>
             <Box
               component="img"
               src={item.thumbnail}
               alt=""
               sx={(theme) => ({
-                width: { xs: '100%', sm: 240 },
+                width: { xs: '100%', md: 240 },
                 aspectRatio: '16 / 9',
                 objectFit: 'cover',
                 borderRadius: `${theme.app.radius}px`,
@@ -137,47 +138,56 @@ export function VideoCard({ item }) {
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
+                  overflowWrap: 'anywhere',
                 }}
               >
                 {item.title}
               </Typography>
             )}
             {item.uploader && (
-              <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25, overflowWrap: 'anywhere' }}>
                 {item.uploader}
               </Typography>
             )}
           </Box>
 
-          {!isDirect && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Format
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Format
+            </Typography>
+            <SegmentedControl
+              ariaLabel="Output format"
+              size="small"
+              value={container}
+              onChange={setContainer}
+              options={[
+                {
+                  value: 'mp4',
+                  label: 'MP4 video',
+                  icon: <MovieRoundedIcon sx={{ fontSize: 16 }} />,
+                },
+                {
+                  value: 'gif',
+                  label: 'GIF animation',
+                  icon: <GifRoundedIcon sx={{ fontSize: 16 }} />,
+                },
+                ...(!isDirect && item.canMp3
+                  ? [
+                      {
+                        value: 'mp3',
+                        label: 'MP3 audio',
+                        icon: <MusicNoteRoundedIcon sx={{ fontSize: 16 }} />,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            {container === 'gif' && (
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                Loops silently, up to 640px wide at 15 fps.
               </Typography>
-              <SegmentedControl
-                ariaLabel="Output format"
-                size="small"
-                value={container}
-                onChange={setContainer}
-                options={[
-                  {
-                    value: 'mp4',
-                    label: 'MP4 video',
-                    icon: <MovieRoundedIcon sx={{ fontSize: 16 }} />,
-                  },
-                  ...(item.canMp3
-                    ? [
-                        {
-                          value: 'mp3',
-                          label: 'MP3 audio',
-                          icon: <MusicNoteRoundedIcon sx={{ fontSize: 16 }} />,
-                        },
-                      ]
-                    : []),
-                ]}
-              />
-            </Box>
-          )}
+            )}
+          </Box>
 
           {!isDirect && container === 'mp4' && qualityOptions.length > 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -194,17 +204,17 @@ export function VideoCard({ item }) {
             </Box>
           )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mt: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, flexWrap: 'wrap', mt: 0.5 }}>
             <Button
               onClick={download}
               disabled={busy || (!isDirect && container === 'mp4' && qualityOptions.length > 0 && !height)}
               startIcon={<DownloadRoundedIcon sx={{ fontSize: 18 }} />}
             >
-              {busy ? 'Grabbing…' : isDirect ? 'Download video' : `Download ${container.toUpperCase()}`}
+              {busy ? 'Grabbing…' : `Download ${container.toUpperCase()}`}
             </Button>
 
             {busy && (
-              <Stack sx={{ flex: 1, minWidth: 180, gap: 0.75 }}>
+              <Stack sx={{ flex: 1, minWidth: 0, gap: 0.75 }}>
                 <LinearProgress variant="determinate" value={job.progress ?? 0} />
                 <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
                   {job.phase} · {job.progress ?? 0}%
@@ -214,7 +224,7 @@ export function VideoCard({ item }) {
           </Box>
 
           {error && (
-            <Typography sx={{ color: 'secondary.main', fontWeight: 500, fontSize: 13 }}>
+            <Typography sx={{ color: 'secondary.main', fontWeight: 500, fontSize: 13, overflowWrap: 'anywhere' }}>
               {error}
             </Typography>
           )}

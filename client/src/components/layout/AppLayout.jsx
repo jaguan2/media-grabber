@@ -2,7 +2,7 @@ import { Box } from '@mui/material'
 import { Header } from './Header'
 import { Footer } from './Footer'
 
-/** App frame: minimal header, centered content column, minimal footer. */
+/** Full-width header/footer around a centered, readable content column. */
 export function AppLayout({ onGoHome, children }) {
   return (
     <Box
@@ -12,7 +12,6 @@ export function AppLayout({ onGoHome, children }) {
         flexDirection: 'column',
         bgcolor: 'background.default',
         color: 'text.primary',
-        overflowX: 'clip',
       }}
     >
       <Box
@@ -43,10 +42,11 @@ export function AppLayout({ onGoHome, children }) {
         id="main-content"
         sx={{
           flex: 1,
+          minWidth: 0,
           width: '100%',
           maxWidth: 1080,
           mx: 'auto',
-          px: { xs: 3, md: 4 },
+          px: { xs: 2, sm: 3, md: 4 },
         }}
       >
         {children}

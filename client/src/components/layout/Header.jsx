@@ -35,7 +35,7 @@ function NavLabel({ children }) {
 
 /**
  * Minimal top nav in the portfolio style: wordmark left, supported-platform
- * labels right, generous whitespace, no background chrome.
+ * labels right, in a full-width band with responsive page gutters.
  */
 export function Header({ onGoHome }) {
   return (
@@ -46,12 +46,11 @@ export function Header({ onGoHome }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: 2,
-        maxWidth: 1080,
-        mx: 'auto',
+        gap: { xs: 1, sm: 2 },
         width: '100%',
-        px: { xs: 3, md: 4 },
-        py: 3,
+        px: { xs: 2, sm: 3, md: '4%', lg: '5%' },
+        py: { xs: 1.5, sm: 2 },
+        borderBottom: (theme) => `1px solid ${theme.app.border}`,
       }}
     >
       <Logo onGoHome={onGoHome} />
@@ -60,7 +59,7 @@ export function Header({ onGoHome }) {
         aria-label="Supported platforms"
         direction="row"
         spacing={{ xs: 2.5, md: 3.5 }}
-        sx={{ display: { xs: 'none', sm: 'flex' } }}
+        sx={{ flexBasis: { xs: '100%', sm: 'auto' }, pb: { xs: 0.75, sm: 0 } }}
       >
         {PLATFORMS.map((p) => (
           <NavLabel key={p}>{p}</NavLabel>

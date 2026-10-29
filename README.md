@@ -19,6 +19,10 @@ that rips the audio track on its own.
 Downloads run as jobs on the server. yt-dlp fetches the video and audio streams, ffmpeg
 merges them into an MP4, and the browser polls for progress while it happens.
 
+Choose **GIF animation** to save a video or X GIF attachment as an actual `.gif` file.
+ffmpeg converts the full clip into a silent, looping animation, up to 640 pixels wide
+at 15 fps. MP4 remains available for smaller files and higher quality.
+
 ## Photos
 
 Photo posts come back as a grid. Every image in an Instagram carousel or a multi-photo

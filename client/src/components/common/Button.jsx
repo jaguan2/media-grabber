@@ -35,6 +35,7 @@ export function Button({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
+          minHeight: { xs: 44, md: size === 'small' ? 36 : 44 },
           gap: 0.75,
           borderRadius: `${theme.app.radius}px`,
           fontWeight: 500,

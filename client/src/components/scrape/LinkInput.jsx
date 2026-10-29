@@ -29,6 +29,7 @@ export function LinkInput({ onSubmit, busy }) {
       <Box
         sx={(theme) => ({
           flex: 1,
+          minWidth: 0,
           display: 'flex',
           alignItems: 'center',
           px: 2,
@@ -51,7 +52,7 @@ export function LinkInput({ onSubmit, busy }) {
           placeholder="Paste a YouTube, Instagram, or X link…"
           fullWidth
           inputProps={{ 'aria-label': 'Post link', spellCheck: false }}
-          sx={{ py: 1.5, fontSize: 15, fontWeight: 400 }}
+          sx={{ py: 1.5, fontSize: 16, fontWeight: 400 }}
         />
       </Box>
 
@@ -65,7 +66,7 @@ export function LinkInput({ onSubmit, busy }) {
             <ArrowDownwardRoundedIcon sx={{ fontSize: 18 }} />
           )
         }
-        sx={{ px: 4, whiteSpace: 'nowrap' }}
+        sx={{ px: 4, minHeight: 48, whiteSpace: 'nowrap' }}
       >
         {busy ? 'Reading…' : 'Grab it'}
       </Button>

@@ -17,7 +17,7 @@ export function SegmentedControl({ options, value, onChange, size = 'medium', sx
     <Box
       role="group"
       aria-label={ariaLabel}
-      sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 1, ...sx }}
+      sx={{ display: 'inline-flex', flexWrap: 'wrap', maxWidth: '100%', gap: 1, ...sx }}
     >
       {options.map((opt) => {
         const selected = opt.value === value
@@ -34,6 +34,7 @@ export function SegmentedControl({ options, value, onChange, size = 'medium', sx
                 flexDirection: opt.sub ? 'column' : 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
+                minHeight: { xs: 44, md: 36 },
                 gap: opt.sub ? 0.1 : 0.6,
                 borderRadius: `${theme.app.radius}px`,
                 fontWeight: 500,

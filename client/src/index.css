@@ -23,6 +23,5 @@ html {
 }
 
 body {
-  overflow-x: clip;
   max-width: 100%;
 }

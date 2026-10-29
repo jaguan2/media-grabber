@@ -22,7 +22,7 @@ export async function resolveLink(url) {
   return jsonOrThrow(resp, 'Could not read that link.')
 }
 
-/** Start a video/audio download job → { id }. */
+/** Start a video/audio/GIF download job → { id }. */
 export async function startJob({ url, format, height, playlistIndex }) {
   const resp = await fetch('/api/jobs', {
     method: 'POST',

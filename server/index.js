@@ -31,14 +31,14 @@ app.post('/api/resolve', async (req, res) => {
 // Proxy (and optionally convert / attach) a remote image or thumbnail.
 app.get('/api/media', streamMedia)
 
-// Start a video/audio download job; poll it; then fetch the file.
+// Start a video/audio/GIF download job; poll it; then fetch the file.
 app.post('/api/jobs', (req, res) => {
   const { url, format, height, playlistIndex } = req.body ?? {}
   if (!/^https?:\/\//i.test(String(url ?? ''))) {
     return res.status(400).json({ error: 'Bad video URL.' })
   }
-  if (format !== 'mp4' && format !== 'mp3') {
-    return res.status(400).json({ error: 'Format must be mp4 or mp3.' })
+  if (!['mp4', 'mp3', 'gif'].includes(format)) {
+    return res.status(400).json({ error: 'Format must be mp4, mp3, or gif.' })
   }
   const h = height ? parseInt(height, 10) : null
   const idx = playlistIndex ? parseInt(playlistIndex, 10) : null

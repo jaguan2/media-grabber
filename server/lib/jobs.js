@@ -1,12 +1,14 @@
 // Video download jobs. A job spawns yt-dlp into a per-job temp dir, tracks
 // percent progress from its stdout, and exposes the finished file for one
 // streamed download (after which the temp dir is deleted). MP4 merges best
-// video ≤ chosen height with best audio via ffmpeg; MP3 extracts audio.
+// video ≤ chosen height with best audio via ffmpeg; MP3 extracts audio;
+// GIF converts the downloaded video into a silent, looping animation.
 
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { spawn } from 'node:child_process'
 import { ytdlpExec, ffmpegPath, friendlyYtdlpError } from './ytdlp.js'
 
 // System temp, NOT inside the repo: the project lives in a OneDrive-synced
@@ -18,6 +20,33 @@ const MEDIA_EXTS = new Set(['.mp4', '.mkv', '.webm', '.mp3', '.m4a'])
 const STALE_MS = 60 * 60 * 1000 // reclaim undownloaded jobs after an hour
 
 const jobs = new Map()
+
+async function convertToGif(job, input) {
+  const output = path.join(job.dir, `${path.parse(input).name}.gif`)
+  job.phase = 'converting to GIF'
+  job.progress = 99
+  // A generated palette preserves colors; limit dimensions and frame rate
+  // to keep GIF sizes manageable, and loop the full animation forever.
+  const child = spawn(ffmpegPath, [
+    '-hide_banner', '-loglevel', 'error', '-y', '-i', input,
+    '-filter_complex',
+    "fps=15,scale=w='min(640,iw)':h=-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse",
+    '-an', '-loop', '0', output,
+  ], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] })
+  job.child = child
+  // Drain stderr so a failed encoder cannot block on a full pipe.
+  child.stderr.on('data', () => {})
+  await new Promise((resolve, reject) => {
+    const fail = () => {
+      const error = new Error('Could not convert this video to GIF. Try downloading MP4 instead.')
+      error.friendly = error.message
+      reject(error)
+    }
+    child.once('error', fail)
+    child.once('close', (code) => code === 0 ? resolve() : fail())
+  })
+  return output
+}
 
 export function createJob({ url, format, height, playlistIndex }) {
   const id = randomUUID()
@@ -40,6 +69,8 @@ export function createJob({ url, format, height, playlistIndex }) {
     flags.audioFormat = 'mp3'
     flags.audioQuality = '0'
     flags.format = 'ba/b'
+  } else if (format === 'gif') {
+    flags.format = 'bv/b'
   } else {
     flags.format = height
       ? `bv*[height<=${height}]+ba/b[height<=${height}]/bv*+ba/b`
@@ -63,7 +94,7 @@ export function createJob({ url, format, height, playlistIndex }) {
 
   // yt-dlp prints one "[download] Destination:" per stream (video, then audio
   // for merged MP4s), each counting 0→100%. Fold them into a single 0→100 bar.
-  const totalPhases = format === 'mp3' ? 1 : 2
+  const totalPhases = format === 'mp4' ? 2 : 1
   let phase = 0
   let buffer = ''
   child.stdout?.on('data', (chunk) => {
@@ -89,7 +120,7 @@ export function createJob({ url, format, height, playlistIndex }) {
   })
 
   child
-    .then(() => {
+    .then(async () => {
       const file = fs
         .readdirSync(dir)
         .filter((f) => MEDIA_EXTS.has(path.extname(f).toLowerCase()))
@@ -100,14 +131,15 @@ export function createJob({ url, format, height, playlistIndex }) {
         job.error = 'Download finished but no output file was produced.'
         return
       }
-      job.file = path.join(dir, file)
+      const input = path.join(dir, file)
+      job.file = format === 'gif' ? await convertToGif(job, input) : input
       job.status = 'done'
       job.progress = 100
       job.phase = 'done'
     })
     .catch((err) => {
       job.status = 'error'
-      job.error = friendlyYtdlpError(err).friendly
+      job.error = err.friendly ?? friendlyYtdlpError(err).friendly
     })
 
   return id

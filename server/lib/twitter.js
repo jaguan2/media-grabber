@@ -50,14 +50,20 @@ export async function resolveTwitter(url) {
 
   const hasVideo = media.some((m) => m.type === 'video' || m.type === 'gif')
   if (hasVideo) {
+    let videos = []
     // Ask yt-dlp for the tweet's video formats so quality choices are real.
     try {
       const info = await ytdlpJson(url)
       const normalized = normalizeYtdlp(info, url, 'twitter')
-      items.push(...normalized.items.filter((i) => i.type === 'video'))
+      videos = normalized.items.filter((i) => i.type === 'video')
     } catch {
+      // Enrichment is optional; the direct files below still work.
+    }
+    items.push(...videos)
+    if (videos.length === 0) {
       // Fall back to fxtwitter's best-quality direct file: still downloadable,
-      // just without a quality picker.
+      // just without a quality picker. Some GIFs resolve successfully in
+      // yt-dlp but normalize to no videos because codec metadata is missing.
       for (const m of media) {
         if (m.type !== 'video' && m.type !== 'gif') continue
         items.push({
@@ -68,8 +74,8 @@ export async function resolveTwitter(url) {
           duration: m.duration ?? null,
           thumbnail: proxied(m.thumbnail_url, url),
           qualities: [],
-          // yt-dlp just failed on this tweet, so an MP3 job would fail too —
-          // the client downloads `directUrl` straight through the proxy.
+          // Without usable yt-dlp metadata, disable audio extraction.
+          // The direct file supports MP4 download or GIF conversion.
           canMp3: false,
           directUrl: m.url,
         })

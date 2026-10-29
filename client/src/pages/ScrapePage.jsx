@@ -23,12 +23,12 @@ export function ScrapePage({ state, onFetch }) {
   const badge = PLATFORM_LABEL[data?.platform] ?? PLATFORM_LABEL.other
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, py: { xs: 5, md: 8 } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 }, py: { xs: 4, sm: 6, md: 8 } }}>
       {/* Hero */}
       <Box sx={{ maxWidth: 720 }}>
         <Typography
           component="h1"
-          sx={{ fontSize: { xs: 40, md: 60 }, fontWeight: 600, lineHeight: 1.05, letterSpacing: '-1.5px' }}
+          sx={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 600, lineHeight: 1.1, letterSpacing: '-1.5px' }}
         >
           Paste a link,
           <br />
@@ -36,7 +36,7 @@ export function ScrapePage({ state, onFetch }) {
           <Box component="span" sx={{ color: 'secondary.main' }}> media.</Box>
         </Typography>
         <Typography sx={{ color: 'text.secondary', fontSize: { xs: 16, md: 19 }, mt: 2.5, maxWidth: 560 }}>
-          An ad-free grabber for YouTube, Instagram, and X. Videos as MP4 or MP3, photos as
+          An ad-free grabber for YouTube, Instagram, and X. Videos as MP4, MP3, or GIF, photos as
           JPG or PNG. No popups, no countdown timers, no “premium”.
         </Typography>
       </Box>
@@ -53,9 +53,9 @@ export function ScrapePage({ state, onFetch }) {
       )}
 
       {status === 'error' && (
-        <Paper sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, borderColor: 'secondary.main' }}>
-          <ErrorOutlineRoundedIcon sx={{ color: 'secondary.main' }} />
-          <Typography sx={{ fontWeight: 500, fontSize: 14.5 }}>{error}</Typography>
+        <Paper sx={{ p: { xs: 2, sm: 2.5 }, display: 'flex', alignItems: 'flex-start', gap: 1.5, borderColor: 'secondary.main' }}>
+          <ErrorOutlineRoundedIcon sx={{ color: 'secondary.main', flexShrink: 0 }} />
+          <Typography sx={{ minWidth: 0, overflowWrap: 'anywhere', fontWeight: 500, fontSize: 14.5 }}>{error}</Typography>
         </Paper>
       )}
 
@@ -76,7 +76,7 @@ export function ScrapePage({ state, onFetch }) {
               {badge}
             </Typography>
             {(data.title || data.uploader) && (
-              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              <Typography sx={{ minWidth: 0, overflowWrap: 'anywhere', color: 'text.secondary', fontSize: 14 }}>
                 {[data.uploader, data.title].filter(Boolean).join(' · ').slice(0, 120)}
               </Typography>
             )}
