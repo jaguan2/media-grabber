@@ -7,10 +7,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 300,
-      "includeFiles": [
-        "node_modules/ffmpeg-static/ffmpeg",
-        "node_modules/youtube-dl-exec/bin/**"
-      ]
+      "includeFiles": "node_modules/{ffmpeg-static/ffmpeg,youtube-dl-exec/bin/**}"
     }
   },
   "rewrites": [
