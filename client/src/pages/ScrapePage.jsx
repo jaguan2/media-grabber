@@ -1,4 +1,5 @@
 import { Box, Paper, Typography, CircularProgress } from '@mui/material'
+import { useEffect, useState } from 'react'
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
 import { LinkInput } from '../components/scrape/LinkInput'
 import { VideoCard } from '../components/scrape/VideoCard'
@@ -17,6 +18,15 @@ const PLATFORM_LABEL = {
  */
 export function ScrapePage({ state, onFetch }) {
   const { status, data, error } = state
+  const [hosted, setHosted] = useState(false)
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch('/api/config', { signal: controller.signal })
+      .then((response) => response.json())
+      .then((config) => setHosted(config.mode === 'hosted'))
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
 
   const images = data?.items?.filter((i) => i.type === 'image') ?? []
   const videos = data?.items?.filter((i) => i.type === 'video') ?? []
@@ -42,6 +52,13 @@ export function ScrapePage({ state, onFetch }) {
       </Box>
 
       <LinkInput onSubmit={onFetch} busy={status === 'loading'} />
+
+      {hosted && (
+        <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
+          Long or high-quality videos may not finish on the hosted app, but you can still try.
+          Keep this page open while downloading.
+        </Typography>
+      )}
 
       {status === 'loading' && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>

@@ -7,7 +7,7 @@ import GifRoundedIcon from '@mui/icons-material/GifRounded'
 import { Button } from '../common/Button'
 import { SegmentedControl } from '../common/SegmentedControl'
 import { startJob, getJob, jobFileUrl, mediaProxyUrl } from '../../utils/api'
-import { downloadUrl } from '../../utils/download'
+import { downloadUrl, downloadBlob } from '../../utils/download'
 import { formatBytes, formatDuration, safeName } from '../../utils/format'
 
 /**
@@ -20,8 +20,12 @@ export function VideoCard({ item }) {
   const [job, setJob] = useState(null) // { id, progress, phase } while running
   const [error, setError] = useState(null)
   const pollRef = useRef(null)
+  const requestRef = useRef(null)
 
-  useEffect(() => () => clearInterval(pollRef.current), [])
+  useEffect(() => () => {
+    clearInterval(pollRef.current)
+    requestRef.current?.abort()
+  }, [])
 
   const busy = Boolean(job)
   // Fallback path (e.g. a tweet video yt-dlp couldn't parse): no quality
@@ -35,12 +39,23 @@ export function VideoCard({ item }) {
       return
     }
     try {
-      const { id } = await startJob({
+      requestRef.current = new AbortController()
+      setJob({ progress: 0, phase: 'starting' })
+      const result = await startJob({
         url: container === 'gif' ? item.directUrl ?? item.url : item.url,
         format: container,
         height: container === 'mp4' ? height : undefined,
         playlistIndex: item.playlistIndex,
+      }, {
+        signal: requestRef.current.signal,
+        onProgress: ({ progress, phase }) => setJob({ progress, phase }),
       })
+      if (result.file) {
+        downloadBlob(result.file, result.filename)
+        setJob(null)
+        return
+      }
+      const { id } = result
       setJob({ id, progress: 0, phase: 'starting' })
       // Closure-local guards: skip ticks while one is in flight, and make
       // sure a slow straggler can't double-trigger the finished download.
@@ -77,6 +92,8 @@ export function VideoCard({ item }) {
         }
       }, 700)
     } catch (err) {
+      setJob(null)
+      if (err.name === 'AbortError') return
       setError(err.message)
     }
   }

@@ -114,6 +114,60 @@ Open http://localhost:5173. The API listens on 5175 and Vite proxies `/api` to i
 | `npm start`           | Serve the API and the built client from one process    |
 | `npm run package:win` | Build the portable Windows app with `MediaScraper.exe` |
 
+## Vercel Hobby (free) trial
+
+The same codebase supports local development, the portable Windows build, and a
+limited Vercel deployment. Local/EXE video downloads still run as background jobs.
+On Vercel, each download runs entirely inside one HTTP request: the server streams
+progress, then file chunks, and removes the temporary files before ending the
+request. No database, Blob store, queue, daemon, or paid backend is required.
+
+Hosted limits:
+
+- Videos of any length can be attempted. The page warns that long or high-quality
+  videos may not finish; there is no duration filter or fixed 50 MB file limit.
+- Processing stops after **270 seconds** to leave time for transfer and cleanup.
+  Vercel Hobby allows at most **300 seconds per invocation**, including transfer.
+- One video conversion at a time **per function instance** to bound shared scratch
+  space. This is not a global concurrency limit across Vercel's instances.
+- Keep the page open until the download finishes. Closing it cancels the work;
+  hosted jobs cannot be resumed or fetched by another request.
+- The browser assembles the streamed file in memory. The transfer uses base64,
+  adding roughly one third to the video/audio/GIF transfer size.
+- Processing also stops if a job's temporary files exceed 320 MiB. Native yt-dlp
+  unpacking uses additional scratch space. Large/slow jobs should use the local app.
+
+These are application limits for a small personal trial, not a promise of unlimited
+free downloads. Hobby also has monthly CPU, memory, and bandwidth quotas; service
+can pause when they are exhausted. Platform extraction may behave differently from
+a home connection, including bot checks or login requirements.
+
+### Deploy
+
+1. Push this repository to your Git provider and import it into Vercel.
+2. Choose the **Hobby** plan. Keep **Root Directory** at the repository root (not
+   `client` or `server`) and select the **Vite** framework preset.
+3. Keep **Fluid compute** enabled. Use Node.js **22.x or 24.x**. The checked-in
+   `vercel.json` supplies the install command, build command, output directory,
+   API rewrites, native binary inclusions, and 300-second function duration.
+4. Deploy. Test a short public clip first, then MP3/GIF and photo downloads.
+   Confirm that the page shows the hosted limits and that `/api/config` reports
+   `"mode":"hosted"`. Files above 4.5 MB must also work through the streamed route.
+
+No environment variables or storage connection are required for public content.
+The Vercel install command downloads the standalone Linux yt-dlp executable, so
+the Node function does not need an installed Python runtime. Ordinary installs and
+Windows packaging still download the binary for the current operating system.
+Never commit `server/cookies.txt` for deployment.
+
+Relevant Vercel documentation: [Hobby quotas](https://vercel.com/docs/plans/hobby),
+[function limits](https://vercel.com/docs/functions/limitations), and
+[streaming larger responses](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions).
+
+Build/test verification on a local machine does not prove cloud extraction works.
+A successful deployment and real platform download are still required to verify
+the hosted service end to end.
+
 ## Portable Windows build
 
 `npm run package:win` assembles a self-contained app in `dist-win\MediaScraper\`:

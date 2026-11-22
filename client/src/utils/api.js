@@ -1,5 +1,6 @@
 // Thin client for the Media Scraper API. All calls are same-origin (Vite proxies /api
 // to the Express server in dev).
+import { readHostedDownload } from './hostedDownload.js'
 
 async function jsonOrThrow(resp, fallbackMsg) {
   let data = null
@@ -23,12 +24,16 @@ export async function resolveLink(url) {
 }
 
 /** Start a video/audio/GIF download job → { id }. */
-export async function startJob({ url, format, height, playlistIndex }) {
+export async function startJob({ url, format, height, playlistIndex }, { onProgress, signal } = {}) {
   const resp = await fetch('/api/jobs', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ url, format, height, playlistIndex }),
+    signal,
   })
+  if (resp.ok && resp.headers.get('content-type')?.includes('application/x-ndjson')) {
+    return readHostedDownload(resp, onProgress)
+  }
   return jsonOrThrow(resp, 'Could not start the download.')
 }
 

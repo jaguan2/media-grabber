@@ -1,0 +1,8 @@
+node_modules
+.npm-cache
+dist-win
+docs
+scripts
+server/cookies.txt
+server/lib/*.test.js
+*.log

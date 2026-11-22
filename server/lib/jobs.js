@@ -32,7 +32,8 @@ async function convertToGif(job, input) {
     '-filter_complex',
     "fps=15,scale=w='min(640,iw)':h=-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse",
     '-an', '-loop', '0', output,
-  ], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] })
+  ], { windowsHide: true, detached: job.isolated && process.platform !== 'win32',
+    stdio: ['ignore', 'ignore', 'pipe'] })
   job.child = child
   // Drain stderr so a failed encoder cannot block on a full pipe.
   child.stderr.on('data', () => {})
@@ -48,7 +49,7 @@ async function convertToGif(job, input) {
   return output
 }
 
-export function createJob({ url, format, height, playlistIndex }) {
+export function createJob({ url, format, height, playlistIndex }, { maxFileBytes, isolated = false } = {}) {
   const id = randomUUID()
   const dir = path.join(TMP_ROOT, id)
   fs.mkdirSync(dir, { recursive: true })
@@ -58,6 +59,13 @@ export function createJob({ url, format, height, playlistIndex }) {
     restrictFilenames: true, // ASCII-safe names for Windows + Content-Disposition
     newline: true,
     ffmpegLocation: ffmpegPath,
+  }
+  if (maxFileBytes) flags.maxFilesize = maxFileBytes
+  if (isolated) {
+    flags.playlistItems = String(playlistIndex ?? 1)
+    flags.socketTimeout = 15
+    flags.retries = 1
+    flags.fragmentRetries = 1
   }
   // NEVER pass a false boolean to youtube-dl-exec: dargs turns
   // `noPlaylist: false` into the invalid flag `--no-no-playlist`.
@@ -78,7 +86,7 @@ export function createJob({ url, format, height, playlistIndex }) {
     flags.mergeOutputFormat = 'mp4'
   }
 
-  const child = ytdlpExec(url, flags)
+  const child = ytdlpExec(url, flags, { detached: isolated && process.platform !== 'win32' })
   const job = {
     id,
     dir,
@@ -89,6 +97,8 @@ export function createJob({ url, format, height, playlistIndex }) {
     error: null,
     file: null,
     createdAt: Date.now(),
+    isolated,
+    cancelled: false,
   }
   jobs.set(id, job)
 
@@ -119,8 +129,9 @@ export function createJob({ url, format, height, playlistIndex }) {
     }
   })
 
-  child
+  job.completion = child
     .then(async () => {
+      if (job.cancelled) return
       const file = fs
         .readdirSync(dir)
         .filter((f) => MEDIA_EXTS.has(path.extname(f).toLowerCase()))
@@ -132,12 +143,15 @@ export function createJob({ url, format, height, playlistIndex }) {
         return
       }
       const input = path.join(dir, file)
-      job.file = format === 'gif' ? await convertToGif(job, input) : input
+      const output = format === 'gif' ? await convertToGif(job, input) : input
+      if (job.cancelled) return
+      job.file = output
       job.status = 'done'
       job.progress = 100
       job.phase = 'done'
     })
     .catch((err) => {
+      if (job.cancelled) return
       job.status = 'error'
       job.error = err.friendly ?? friendlyYtdlpError(err).friendly
     })
@@ -161,20 +175,23 @@ export function streamJobFile(req, res) {
   })
 }
 
-function destroyJob(id) {
+export async function destroyJob(id) {
   const job = jobs.get(id)
   if (!job) return
   jobs.delete(id)
   // A still-running yt-dlp must die before its temp dir is deleted from
   // under it (also stops hung downloads from living forever).
   if (job.status === 'running') {
+    job.cancelled = true
     try {
-      job.child?.kill()
+      if (job.isolated && process.platform !== 'win32') process.kill(-job.child.pid, 'SIGKILL')
+      else job.child?.kill('SIGKILL')
     } catch {
       // Already exited.
     }
   }
-  fs.rm(job.dir, { recursive: true, force: true }, () => {})
+  await job.completion
+  await fs.promises.rm(job.dir, { recursive: true, force: true }).catch(() => {})
 }
 
 export function cleanupStaleJobs() {

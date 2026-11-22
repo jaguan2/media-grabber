@@ -2,7 +2,7 @@
 // JPG/PNG conversion via sharp and attachment downloads. Remote CDNs block
 // cross-origin <img> loads and hotlinking; routing through here fixes both.
 
-import { Readable, pipeline } from 'node:stream'
+import { Readable, Transform, pipeline } from 'node:stream'
 import sharp from 'sharp'
 import { BROWSER_UA } from './ytdlp.js'
 
@@ -19,20 +19,21 @@ function isBlocked(url) {
 }
 
 /** Fetch with manual redirects so every hop passes the host blocklist. */
-async function fetchChecked(target, headers) {
+async function fetchChecked(target, headers, signal) {
   let current = target
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const resp = await fetch(current, { headers, redirect: 'manual' })
+    const resp = await fetch(current, { headers, redirect: 'manual', signal })
     if (![301, 302, 303, 307, 308].includes(resp.status)) return resp
     const location = resp.headers.get('location')
     if (!location) return resp
+    await resp.body?.cancel()
     current = new URL(location, current)
     if (isBlocked(current)) throw new Error('redirect to blocked host')
   }
   throw new Error('too many redirects')
 }
 
-export async function streamMedia(req, res) {
+export async function streamMedia(req, res, { maxBytes, timeoutMs } = {}) {
   const { src, referer, format, dl } = req.query
 
   let target
@@ -54,12 +55,26 @@ export async function streamMedia(req, res) {
       // the forwarded Content-Length below would no longer match the bytes.
       'accept-encoding': 'identity',
       ...(referer ? { referer } : {}),
-    })
+    }, timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined)
   } catch {
     return res.status(502).json({ error: 'Could not reach the media host.' })
   }
   if (!upstream.ok || !upstream.body) {
     return res.status(502).json({ error: `Media host answered ${upstream.status}.` })
+  }
+  if (maxBytes && Number(upstream.headers.get('content-length')) > maxBytes) {
+    await upstream.body.cancel()
+    return res.status(413).json({ error: 'This file is too large for the hosted app. Try the local app.' })
+  }
+
+  const byteLimit = () => {
+    let received = 0
+    return new Transform({
+      transform(chunk, encoding, callback) {
+        received += chunk.length
+        callback(maxBytes && received > maxBytes ? new Error('Hosted file size limit exceeded.') : null, chunk)
+      },
+    })
   }
 
   if (dl) {
@@ -83,7 +98,7 @@ export async function streamMedia(req, res) {
       format === 'png'
         ? sharp().png()
         : sharp().flatten({ background: '#ffffff' }).jpeg({ quality: 92 })
-    pipeline(body, transformer, res, done)
+    pipeline(body, byteLimit(), transformer, byteLimit(), res, done)
     return
   }
 
@@ -92,5 +107,5 @@ export async function streamMedia(req, res) {
   if (len && !upstream.headers.get('content-encoding')) res.setHeader('Content-Length', len)
   // Proxied assets are immutable CDN objects — let the browser cache them.
   res.setHeader('Cache-Control', 'public, max-age=3600')
-  pipeline(body, res, done)
+  pipeline(body, byteLimit(), res, done)
 }

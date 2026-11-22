@@ -38,13 +38,13 @@ export async function ytdlpJson(url, extra = {}) {
     skipDownload: true,
     ...commonFlags(),
     ...extra,
-  })
+  }, process.env.VERCEL === '1' ? { timeout: 90_000, killSignal: 'SIGKILL' } : {})
   return typeof out === 'string' ? JSON.parse(out) : out
 }
 
 /** Spawn a yt-dlp download subprocess (returns the execa child promise). */
-export function ytdlpExec(url, flags) {
-  return youtubedl.exec(url, { ...commonFlags(), ...flags })
+export function ytdlpExec(url, flags, options = {}) {
+  return youtubedl.exec(url, { ...commonFlags(), ...flags }, options)
 }
 
 /**

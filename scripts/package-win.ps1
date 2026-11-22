@@ -18,11 +18,17 @@ Pop-Location
 if (-not $ok) { throw 'Client build failed.' }
 
 Write-Host '[2/6] Laying out the package folder...'
-if (Test-Path $out) { Remove-Item $out -Recurse -Force }
+$resolvedOut = [System.IO.Path]::GetFullPath($out)
+$expectedOut = [System.IO.Path]::GetFullPath((Join-Path $root 'dist-win\MediaScraper'))
+if ($resolvedOut -ne $expectedOut -or -not $resolvedOut.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) {
+  throw 'Refusing to clear a package folder outside this project.'
+}
+if (Test-Path -LiteralPath $resolvedOut) { Remove-Item -LiteralPath $resolvedOut -Recurse -Force }
 New-Item -ItemType Directory -Force "$out\server\lib" | Out-Null
 New-Item -ItemType Directory -Force "$out\client" | Out-Null
 New-Item -ItemType Directory -Force "$out\node" | Out-Null
 Copy-Item "$root\server\index.js" "$out\server\"
+Copy-Item "$root\server\app.js" "$out\server\"
 Copy-Item "$root\server\package.json" "$out\server\"
 Copy-Item "$root\server\lib\*" "$out\server\lib\"
 Copy-Item "$root\client\dist" "$out\client\dist" -Recurse
