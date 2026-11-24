@@ -3,10 +3,10 @@ import { alpha } from '@mui/material/styles'
 
 /**
  * The portfolio's flat button: solid dark fill with light text, hairline
- * border, small rounding, and an invert-on-hover with a gentle downward nudge.
+ * border, small rounding, and a subtle lift on hover.
  *
  * `variant`:
- *   'solid'   — dark fill, inverts to light on hover (primary actions)
+ *   'solid'   — dark fill (primary actions)
  *   'outline' — transparent with a border, fills dark on hover (secondary)
  *   'accent'  — hot-pink fill (rare, high-emphasis)
  */
@@ -21,9 +21,7 @@ export function Button({
   ...rest
 }) {
   const pad =
-    size === 'small'
-      ? { px: 1.75, py: 0.85, fontSize: 13 }
-      : { px: 2.5, py: 1.25, fontSize: 14 }
+    size === 'small' ? { px: 1.75, py: 0.85, fontSize: 13 } : { px: 2.5, py: 1.25, fontSize: 14 }
 
   return (
     <ButtonBase
@@ -50,7 +48,7 @@ export function Button({
             color: background,
             borderColor: ink,
             '@media (hover: hover)': {
-              '&:hover': { bgcolor: background, color: ink, transform: 'translateY(4px)' },
+              '&:hover': { bgcolor: '#333139', color: background, transform: 'translateY(-1px)' },
             },
           },
           outline: {
@@ -58,15 +56,26 @@ export function Button({
             color: ink,
             borderColor: border,
             '@media (hover: hover)': {
-              '&:hover': { bgcolor: ink, color: background, borderColor: ink, transform: 'translateY(4px)' },
+              '&:hover': {
+                bgcolor: ink,
+                color: background,
+                borderColor: ink,
+                transform: 'translateY(-1px)',
+              },
             },
           },
           accent: {
-            bgcolor: accent,
+            bgcolor: '#e00046',
             color: '#fff',
-            borderColor: accent,
+            borderColor: '#e00046',
             '@media (hover: hover)': {
-              '&:hover': { bgcolor: background, color: accent, transform: 'translateY(4px)' },
+              '&:hover': {
+                bgcolor: '#dc0044',
+                borderColor: '#dc0044',
+                color: '#fff',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 5px 16px #ff004f20',
+              },
             },
           },
         }

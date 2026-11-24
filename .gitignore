@@ -1,6 +1,7 @@
 node_modules/
 .npm-cache/
 .vercel/
+.playwright-mcp/
 dist/
 dist-win/
 .env

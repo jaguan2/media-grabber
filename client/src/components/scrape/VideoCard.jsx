@@ -4,6 +4,7 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import MovieRoundedIcon from '@mui/icons-material/MovieRounded'
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded'
 import GifRoundedIcon from '@mui/icons-material/GifRounded'
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import { Button } from '../common/Button'
 import { SegmentedControl } from '../common/SegmentedControl'
 import { startJob, getJob, jobFileUrl, mediaProxyUrl } from '../../utils/api'
@@ -22,10 +23,13 @@ export function VideoCard({ item }) {
   const pollRef = useRef(null)
   const requestRef = useRef(null)
 
-  useEffect(() => () => {
-    clearInterval(pollRef.current)
-    requestRef.current?.abort()
-  }, [])
+  useEffect(
+    () => () => {
+      clearInterval(pollRef.current)
+      requestRef.current?.abort()
+    },
+    []
+  )
 
   const busy = Boolean(job)
   // Fallback path (e.g. a tweet video yt-dlp couldn't parse): no quality
@@ -41,15 +45,18 @@ export function VideoCard({ item }) {
     try {
       requestRef.current = new AbortController()
       setJob({ progress: 0, phase: 'starting' })
-      const result = await startJob({
-        url: container === 'gif' ? item.directUrl ?? item.url : item.url,
-        format: container,
-        height: container === 'mp4' ? height : undefined,
-        playlistIndex: item.playlistIndex,
-      }, {
-        signal: requestRef.current.signal,
-        onProgress: ({ progress, phase }) => setJob({ progress, phase }),
-      })
+      const result = await startJob(
+        {
+          url: container === 'gif' ? (item.directUrl ?? item.url) : item.url,
+          format: container,
+          height: container === 'mp4' ? height : undefined,
+          playlistIndex: item.playlistIndex,
+        },
+        {
+          signal: requestRef.current.signal,
+          onProgress: ({ progress, phase }) => setJob({ progress, phase }),
+        }
+      )
       if (result.file) {
         downloadBlob(result.file, result.filename)
         setJob(null)
@@ -105,71 +112,142 @@ export function VideoCard({ item }) {
   }))
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-      <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, flexDirection: { xs: 'column', md: 'row' } }}>
-        {item.thumbnail && (
-          <Box sx={{ position: 'relative', flexShrink: 0, alignSelf: { xs: 'stretch', md: 'start' } }}>
+    <Paper
+      sx={{ p: { xs: 2, sm: 3 }, borderRadius: '18px', boxShadow: '0 8px 35px -28px #47263440' }}
+    >
+      <Box
+        sx={{ display: 'flex', gap: { xs: 2, md: 3 }, flexDirection: { xs: 'column', md: 'row' } }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            flexShrink: 0,
+            alignSelf: { xs: 'stretch', md: 'start' },
+            width: { xs: '100%', md: 300 },
+            aspectRatio: '16 / 10',
+            overflow: 'hidden',
+            borderRadius: '12px',
+            bgcolor: '#f0eceb',
+          }}
+        >
+          {item.thumbnail ? (
             <Box
               component="img"
               src={item.thumbnail}
               alt=""
               sx={(theme) => ({
-                width: { xs: '100%', md: 240 },
-                aspectRatio: '16 / 9',
+                width: '100%',
+                height: '100%',
                 objectFit: 'cover',
                 borderRadius: `${theme.app.radius}px`,
                 border: `1px solid ${theme.app.border}`,
                 display: 'block',
               })}
             />
-            {item.duration != null && (
-              <Typography
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  bottom: 8,
-                  px: 0.85,
-                  py: 0.15,
-                  borderRadius: 1,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  bgcolor: 'rgba(30,30,36,0.85)',
-                  color: '#fff',
-                }}
-              >
-                {formatDuration(item.duration)}
-              </Typography>
-            )}
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                gap: 1,
+                color: 'text.secondary',
+              }}
+            >
+              <MovieRoundedIcon sx={{ fontSize: 38, opacity: 0.5 }} />
+              <Typography sx={{ fontSize: 12 }}>Video preview unavailable</Typography>
+            </Box>
+          )}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 12,
+              top: 12,
+              bgcolor: '#ffffffed',
+              borderRadius: '5px',
+              px: 0.8,
+              py: 0.4,
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: '.6px',
+            }}
+          >
+            VIDEO
           </Box>
-        )}
+          {item.duration != null && (
+            <Typography
+              sx={{
+                position: 'absolute',
+                right: 8,
+                bottom: 8,
+                px: 0.85,
+                py: 0.15,
+                borderRadius: 1,
+                fontSize: 12,
+                fontWeight: 500,
+                bgcolor: 'rgba(30,30,36,0.85)',
+                color: '#fff',
+              }}
+            >
+              {formatDuration(item.duration)}
+            </Typography>
+          )}
+        </Box>
 
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
           <Box>
-            {item.title && (
+            <Typography
+              component="h3"
+              sx={{
+                fontWeight: 600,
+                fontSize: { xs: 18, md: 20 },
+                letterSpacing: '-.4px',
+                lineHeight: 1.35,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {item.title || 'Your video'}
+            </Typography>
+            {item.uploader && (
               <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  lineHeight: 1.35,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  overflowWrap: 'anywhere',
-                }}
+                sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25, overflowWrap: 'anywhere' }}
               >
-                {item.title}
+                {item.uploader}
               </Typography>
             )}
-            {item.uploader && (
-              <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25, overflowWrap: 'anywhere' }}>
-                {item.uploader}
+            {item.duration != null && (
+              <Typography
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mt: 1,
+                  fontSize: 11,
+                  color: 'text.secondary',
+                }}
+              >
+                <AccessTimeRoundedIcon sx={{ fontSize: 14 }} />
+                {formatDuration(item.duration)}
               </Typography>
             )}
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Format
             </Typography>
             <SegmentedControl
@@ -177,6 +255,7 @@ export function VideoCard({ item }) {
               size="small"
               value={container}
               onChange={setContainer}
+              disabled={busy}
               options={[
                 {
                   value: 'mp4',
@@ -208,7 +287,15 @@ export function VideoCard({ item }) {
 
           {!isDirect && container === 'mp4' && qualityOptions.length > 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
                 Quality
               </Typography>
               <SegmentedControl
@@ -216,22 +303,36 @@ export function VideoCard({ item }) {
                 size="small"
                 value={height}
                 onChange={setHeight}
+                disabled={busy}
                 options={qualityOptions}
               />
             </Box>
           )}
 
-          <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, flexWrap: 'wrap', mt: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'stretch', sm: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              flexWrap: 'wrap',
+              mt: 0.5,
+            }}
+          >
             <Button
+              variant="accent"
+              sx={{ minWidth: { xs: '100%', sm: 180 }, minHeight: 46, borderRadius: '10px' }}
               onClick={download}
-              disabled={busy || (!isDirect && container === 'mp4' && qualityOptions.length > 0 && !height)}
+              disabled={
+                busy || (!isDirect && container === 'mp4' && qualityOptions.length > 0 && !height)
+              }
               startIcon={<DownloadRoundedIcon sx={{ fontSize: 18 }} />}
             >
               {busy ? 'Grabbing…' : `Download ${container.toUpperCase()}`}
             </Button>
 
             {busy && (
-              <Stack sx={{ flex: 1, minWidth: 0, gap: 0.75 }}>
+              <Stack role="status" aria-live="polite" sx={{ flex: 1, minWidth: 0, gap: 0.75 }}>
                 <LinearProgress variant="determinate" value={job.progress ?? 0} />
                 <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
                   {job.phase} · {job.progress ?? 0}%
@@ -241,7 +342,15 @@ export function VideoCard({ item }) {
           </Box>
 
           {error && (
-            <Typography sx={{ color: 'secondary.main', fontWeight: 500, fontSize: 13, overflowWrap: 'anywhere' }}>
+            <Typography
+              role="alert"
+              sx={{
+                color: 'secondary.main',
+                fontWeight: 500,
+                fontSize: 13,
+                overflowWrap: 'anywhere',
+              }}
+            >
               {error}
             </Typography>
           )}

@@ -26,7 +26,7 @@ export function Footer() {
           Created by{' '}
           <Box
             component="a"
-            href="https://jaguan2.github.io/personal-portfolio/"
+            href="https://jasonguan.vercel.app"
             target="_blank"
             rel="noreferrer"
             sx={{

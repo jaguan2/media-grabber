@@ -1,0 +1,17 @@
+Sample preview photographs
+==========================
+
+lake-tekapo.jpg
+Photographer: Tobias Keller
+Location: Lake Tekapo, New Zealand
+Source: https://unsplash.com/photos/73F4pKoUkM0
+
+redondo-beach.jpg
+Photographer: Paul Hanaoka
+Location: Redondo Beach, United States
+Source: https://unsplash.com/photos/DKnXlH_r3x4
+
+Both photos are used under the Unsplash License:
+https://unsplash.com/license
+
+Downloaded at reduced resolution for the decorative sample media previews.

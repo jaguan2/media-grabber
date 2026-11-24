@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import FolderZipRoundedIcon from '@mui/icons-material/FolderZipRounded'
+import CollectionsRoundedIcon from '@mui/icons-material/CollectionsRounded'
 import { Button } from '../common/Button'
 import { SegmentedControl } from '../common/SegmentedControl'
 import { imageDownloadUrl } from '../../utils/api'
@@ -41,7 +42,7 @@ export function GalleryCard({ images, title, platform }) {
           const resp = await fetch(imageDownloadUrl(images[i].src, { format: fmt }))
           if (!resp.ok) throw new Error('One of the photos failed to fetch.')
           return { blob: await resp.blob(), filename: nameFor(i) }
-        }),
+        })
       )
       await downloadZip(items, `${base}.zip`)
     } catch (err) {
@@ -54,23 +55,54 @@ export function GalleryCard({ images, title, platform }) {
   const single = images.length === 1
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+    <Paper
+      sx={{ p: { xs: 2, sm: 3 }, borderRadius: '18px', boxShadow: '0 8px 35px -28px #47263440' }}
+    >
       {/* Toolbar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2.5 }}>
-        <Typography sx={{ fontWeight: 600, fontSize: 15, mr: 'auto' }}>
-          {single ? '1 photo' : `${images.length} photos`}
-          {selected.size > 0 && (
-            <Typography component="span" sx={{ color: 'text.secondary', fontWeight: 400, fontSize: 13, ml: 1 }}>
-              · {selected.size} selected
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mr: 'auto' }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: '10px',
+              bgcolor: '#fff0f4',
+              color: '#b92b57',
+            }}
+          >
+            <CollectionsRoundedIcon sx={{ fontSize: 20 }} />
+          </Box>
+          <Box>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: 600, fontSize: 17, letterSpacing: '-.3px' }}
+            >
+              {single ? '1 photo' : `${images.length} photos`}
+              {selected.size > 0 && (
+                <Typography
+                  component="span"
+                  sx={{ color: 'text.secondary', fontWeight: 400, fontSize: 13, ml: 1 }}
+                >
+                  · {selected.size} selected
+                </Typography>
+              )}
             </Typography>
-          )}
-        </Typography>
+            <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
+              {single
+                ? 'A little something to save.'
+                : 'Pick your favorites or take the whole set.'}
+            </Typography>
+          </Box>
+        </Box>
 
         <SegmentedControl
           ariaLabel="Image format"
           size="small"
           value={fmt}
           onChange={setFmt}
+          disabled={zipping}
           options={[
             { value: 'jpg', label: 'JPG' },
             { value: 'png', label: 'PNG' },
@@ -90,7 +122,7 @@ export function GalleryCard({ images, title, platform }) {
                         imageDownloadUrl(images[[...selected][0]].src, {
                           format: fmt,
                           filename: nameFor([...selected][0]),
-                        }),
+                        })
                       )
                     : zipMany([...selected].sort((a, b) => a - b))
                 }
@@ -100,6 +132,7 @@ export function GalleryCard({ images, title, platform }) {
               </Button>
             )}
             <Button
+              variant="accent"
               size="small"
               disabled={zipping}
               onClick={() => zipMany(images.map((_, i) => i))}
@@ -117,6 +150,7 @@ export function GalleryCard({ images, title, platform }) {
         )}
         {single && (
           <Button
+            variant="accent"
             size="small"
             onClick={() =>
               downloadUrl(imageDownloadUrl(images[0].src, { format: fmt, filename: nameFor(0) }))
@@ -129,7 +163,10 @@ export function GalleryCard({ images, title, platform }) {
       </Box>
 
       {error && (
-        <Typography sx={{ color: 'secondary.main', fontWeight: 500, fontSize: 13, mb: 2 }}>
+        <Typography
+          role="alert"
+          sx={{ color: 'secondary.main', fontWeight: 500, fontSize: 13, mb: 2 }}
+        >
           {error}
         </Typography>
       )}
@@ -139,7 +176,7 @@ export function GalleryCard({ images, title, platform }) {
         sx={{
           display: 'grid',
           gridTemplateColumns: single
-            ? 'minmax(0, 440px)'
+            ? 'minmax(0, 560px)'
             : { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
           justifyContent: single ? 'center' : 'start',
           gap: 1.5,
@@ -152,7 +189,7 @@ export function GalleryCard({ images, title, platform }) {
               key={i}
               sx={(theme) => ({
                 position: 'relative',
-                borderRadius: `${theme.app.radius}px`,
+                borderRadius: '12px',
                 overflow: 'hidden',
                 border: `2px solid ${isSelected ? theme.app.accent : theme.app.border}`,
                 transition: 'border-color 160ms ease, transform 200ms ease',
@@ -160,6 +197,7 @@ export function GalleryCard({ images, title, platform }) {
                   '&:hover': { transform: 'translateY(-3px)' },
                   '&:hover .tile-actions': { opacity: 1 },
                 },
+                '&:focus-within .tile-actions': { opacity: 1 },
               })}
             >
               <Box
@@ -176,6 +214,23 @@ export function GalleryCard({ images, title, platform }) {
                   cursor: single ? 'default' : 'pointer',
                 }}
               />
+
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  pointerEvents: 'none',
+                  bgcolor: '#24212a90',
+                  color: '#fff',
+                  px: 0.8,
+                  py: 0.35,
+                  borderRadius: '5px',
+                  fontSize: 10,
+                }}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </Box>
 
               {/* Selection check (multi-photo posts only) */}
               {!single && (
@@ -194,6 +249,7 @@ export function GalleryCard({ images, title, platform }) {
                     border: `1px solid ${isSelected ? theme.app.accent : theme.app.border}`,
                     transition: 'background-color 160ms ease, transform 160ms ease',
                     '&:hover': { transform: 'scale(1.1)' },
+                    '&:focus-visible': { outline: '2px solid #ff004f', outlineOffset: 3 },
                   })}
                 >
                   {isSelected && <CheckRoundedIcon sx={{ fontSize: 18, color: '#fff' }} />}
@@ -229,6 +285,7 @@ export function GalleryCard({ images, title, platform }) {
                     border: `1px solid ${theme.app.border}`,
                     transition: 'transform 160ms ease',
                     '&:hover': { transform: 'scale(1.1)' },
+                    '&:focus-visible': { outline: '2px solid #ff004f', outlineOffset: 3 },
                   })}
                 >
                   <DownloadRoundedIcon sx={{ fontSize: 17, color: 'text.primary' }} />

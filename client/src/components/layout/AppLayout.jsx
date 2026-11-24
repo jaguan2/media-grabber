@@ -11,6 +11,7 @@ export function AppLayout({ onGoHome, children }) {
         display: 'flex',
         flexDirection: 'column',
         bgcolor: 'background.default',
+        backgroundImage: 'radial-gradient(ellipse at 85% 12%, rgba(255,0,79,.035), transparent 48%)',
         color: 'text.primary',
       }}
     >
@@ -44,7 +45,7 @@ export function AppLayout({ onGoHome, children }) {
           flex: 1,
           minWidth: 0,
           width: '100%',
-          maxWidth: 1080,
+          maxWidth: 1160,
           mx: 'auto',
           px: { xs: 2, sm: 3, md: 4 },
         }}
